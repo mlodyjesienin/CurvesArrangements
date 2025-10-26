@@ -17,18 +17,29 @@ Line(name::String) =Line(name, 1)
 struct A <: Singularity
     k::Int
     n_c::Int
-    mult::Int
+    mult::Vector{Int}
     name::String 
 end
-A(k::Int) = A(k, 2, (k + 1) ÷ 2, "A" * string(k))
+A(k::Int) = A(k, 2, [(k + 1) ÷ 2, (k + 1) ÷ 2], "A" * string(k))
 
 struct D <: Singularity
     k::Int
     n_c::Int
-    mult::Int
+    mult::Vector{Pair{Int}}
     name::String
+    function D(k::Int)
+        n_c = 3
+        name =  "D" * string(k) 
+        if(k==2)
+            mult = [Pair(3,2)]
+        else 
+            mult = [Pair(1,2), Pair(2, k ÷ 2)]
+        end 
+        return new(k,n_c,mult, name)
+    end
 end
-D(k::Int) = D(k, 3, 2, "D" * string(k))
+
+
 
 
 struct Arrangement{T<:Curve, S<:Singularity}
@@ -45,13 +56,8 @@ struct Arrangement{T<:Curve, S<:Singularity}
         n_curv = length(curves)
         M = zeros(Int, n_sing, n_curv)
         solutions = Matrix{Int}[]
-        max_sum = zeros(length(curves))
-        total_deg = sum(curve.d for curve in curves);
-        for (idx,curve) in enumerate(curves)
-            d = curve.d
-            max_sum[idx] += d*(total_deg - d)            
-        end
-        rows_permutations = get_rows_permutations(singularites)
+        max_sum = max_sum_for_arr(curves)
+        rows_permutations = get_rows_permutations(singularities)
         cols_permutations = get_cols_permutations(curves)
         return new{T,S}(curves, 
                         singularities, 

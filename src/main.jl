@@ -1,6 +1,7 @@
 using Combinatorics
 
 include("types.jl")
+include("utils.jl")
 
 function draw_solution(arr::Arrangement, sol::Matrix{Int})
     col_headers = [c.name for c in arr.curves]
@@ -24,75 +25,40 @@ function draw_solution(arr::Arrangement, sol::Matrix{Int})
     end
 end
 
-function get_cols_permutations(curves::Vector{<:Curve})
-    n = length(curves)
-    cols_permutations = Vector{Int}[]
-    groups = Dict{Int, Vector{Int}}()
-    for (i, c) in enumerate(curves)
-        push!(get!(groups, c.d, Int[]), i)
-
-    end
-    for permutable_idxs in values(groups)
-        if length(permutable_idxs) < 2 
-            continue 
-        end 
-        cols = [
-            (idxs = collect(1:n); idxs[permutable_idxs] .= perm; idxs)
-            for perm in permutations(permutable_idxs)
-        ]
-        append!(cols_permutations, cols)      
-    end 
-          
-    return cols_permutations
-end
-
-function get_rows_permutations(singularities::Vector{<:Singularity})
-    println("XDDDDDDDDDDDDDDDDDDDDDDDDDDD")
-    n = length(singularities)
-    rows_permutations = Vector{Int}[]
-    groups = Dict{String, Vector{Int}}()
-    printlnt(typeof(groups))
-    for (i, s) in enumerate(singularities)
-        push!(get!(groups, s.name, Int[]), i)
-
-    end
-    for permutable_idxs in values(groups)
-        if length(permutable_idxs) < 2 
-            continue 
-        end 
-        rows = [
-            (idxs = collect(1:n); idxs[permutable_idxs] .= perm; idxs)
-            for perm in permutations(permutable_idxs)
-        ]
-        append!(rows_permutations, cols)      
-    end 
-          
-    return rows_permutations
-end
-
-function remove_repetitions(arr::Arrangement)
-    cols_permutations = get_cols_permutations(arr.curves)
-    println("is it working?")
-    rows_permutations = get_rows_permutations(arr.singularities)    
-    return cols_permutations, rows_permutations
-end
-
 function check_sums(M::Matrix{Int}, max_sum::Vector{Int})
     col_sums = sum(M, dims=1)             
     return all(col_sums .<= max_sum )
 end
 
+function repetition(arr::Arrangement)
+    M = copy(arr.M) 
+    for cols_perm in arr.cols_permutations 
+        for rows_perm in arr.rows_permutations
+            if(M[rows_perm,cols_perm] in arr.solutions)
+                return true 
+            end 
+        end 
+    end 
+    return false 
+end
+
 function recursive_fill(arr::Arrangement, row::Int)
     if row > length(arr.singularities)
-        push!(arr.solutions, arr.M)
+        if !repetition(arr)
+            push!(arr.solutions, copy(arr.M))
+        end
         return 
     end 
 
     M = arr.M
     num_curves = arr.singularities[row].n_c 
     all_curves = length(arr.curves)
+    possible_outcomes = [1:length(arr.curves)]
     possibilities = collect(combinations(1:all_curves, num_curves))
-
+    for (quantity, multiplicity) in arr.singularities[row].mult 
+        for x in possible_outcomes
+        end
+    end 
     for comb in possibilities
         M[row, :] .= 0
         M[row, comb] .= arr.singularities[row].mult
@@ -107,6 +73,13 @@ function recursive_fill(arr::Arrangement, row::Int)
     M[row, :] .= 0
 end
 
+function check_submatrices(cols::Vector{Int},
+                           checked_submatrices::Set{Vector{Int}},
+                           M::Matrix{Int}, 
+                           curves::Vector{<:Curve}, 
+                           singularities::Vector{<:Singularity})
+    M = copy(M)    
+end
 function check_existance(arr::Arrangement)
     recursive_fill(arr, 1)
     println("miau: ", length(arr.solutions))
@@ -118,34 +91,11 @@ function check_existance(arr::Arrangement)
 end
 
 curves = [Conic("Q₁"), Conic("Q₂"), Conic("Q₃"),Conic("Q₄")]    
-singularites = [A(3), A(3), A(3), A(3), D(4), D(4), A(5), A(5), A(7)]
+singularities = [A(3), A(3), A(3), A(3), D(4), D(4), A(5), A(5), A(7)]
 
-arr = Arrangement(curves, singularites)
-arr.max_sum
+arr = Arrangement(curves, singularities)
 check_existance(arr)
-length(arr.solutions)
 
-remove_repetitions(arr)
-
-lol = [2,2,3,4,5]
-c = [3,4,5,10,3]
-all(lol.<c)
-
-idxs = [1, 3, 4]
-
-X = [1 2 3 4;
-     1 2 3 4;
-     1 2 3 4;
-     1 2 3 4]
-
-mats = []
-
-permutable_idxs = [1,3,4]
-n = 4
-cols_permutations = [
-    (idxs = collect(1:n); idxs[permutable_idxs] .= perm; idxs)
-    for perm in permutations(permutable_idxs)
-]
+println(arr.solutions)
 
 
-unique()
