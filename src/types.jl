@@ -39,9 +39,6 @@ struct D <: Singularity
     end
 end
 
-
-
-
 struct Arrangement{T<:Curve, S<:Singularity}
     curves::Vector{T}
     singularities::Vector{S}
