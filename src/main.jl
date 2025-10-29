@@ -133,5 +133,6 @@ arr = Arrangement(curves, singularities)
 check_existance(arr)
 
 println(arr.solutions)
+println("test!")
 
 
