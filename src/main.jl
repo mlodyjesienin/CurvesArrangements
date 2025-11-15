@@ -3,7 +3,6 @@ using Combinatorics
 include("types.jl")
 include("utils.jl")
 
-
 #=
     Function for drawing the found solution matrix. 
 =#
@@ -58,9 +57,9 @@ end
 =#
 function recursive_fill(arr::Arrangement, row::Int)
     if row > length(arr.singularities)
-        if !repetition(arr)
-            push!(arr.solutions, copy(arr.M))
-        end
+        #if !repetition(arr)
+        push!(arr.solutions, copy(arr.M))
+        #end
         return 
     end 
 
@@ -121,7 +120,12 @@ function check_existance(arr::Arrangement)
     recursive_fill(arr, 1)
     println("test: ", length(arr.solutions))
 
+    count = 0
     for sol in arr.solutions
+        count += 1
+        if count % 10000 != 0
+            continue 
+        end
         draw_solution(arr, sol) 
         println()
     end 
@@ -129,6 +133,7 @@ end
 curves = [Conic("Q₁"), Conic("Q₂"), Conic("Q₃"),Conic("Q₄")] 
 
 singularities = [D(6)]
+singularities = [A(1), A(3), A(5), D(4), D(6)]
 singularities = [A(3), A(3), A(3), A(3), D(4), D(4), A(5), A(5), A(7)]
 
 arr = Arrangement(curves, singularities)
