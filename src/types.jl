@@ -6,6 +6,7 @@ include("utils.jl")
 struct Conic <: Curve
     name::String
     d::Int
+
 end
 Conic(name::String) = Conic(name, 2)
 
@@ -17,10 +18,10 @@ Line(name::String) =Line(name, 1)
 struct A <: Singularity
     k::Int
     n_c::Int
-    mult::Vector{Int}
+    mult::Vector{Pair{Int}}
     name::String 
 end
-A(k::Int) = A(k, 2, [(k + 1) ÷ 2, (k + 1) ÷ 2], "A" * string(k))
+A(k::Int) = A(k, 2, [Pair(2,(k + 1) ÷ 2)], "A" * string(k))
 
 struct D <: Singularity
     k::Int

@@ -67,36 +67,37 @@ function recursive_fill(arr::Arrangement, row::Int)
     M = arr.M
     num_curves = arr.singularities[row].n_c 
     all_curves = length(arr.curves)
-    possible_outcomes = [(set(),)]
+    possible_outcomes = [()]
     possibilities = collect(combinations(1:all_curves, num_curves))
-    for (quantity, multiplicity) in arr.singularities[row].mult 
+    for (quantity, multiplicity) in arr.singularities[row].mult
+        new_possibile_outcomes = []
         for tuple_of_sets in possible_outcomes
-            R = set(1:all_curves)
+            R = Set(1:all_curves)
             for Σ in tuple_of_sets
-                R = setminus(R, Σ)
+                R = setdiff(R, Σ)
             end
-            if size(R) < quantity
+            if length(R) < quantity
                 println("error size of a set is not enough")
                 return 0 
             end 
-            for p in collect(combinations(R,quantity))
-                new_tuple = copy(tuple_of_sets)
-                push!(new_tuple, p)
-                new_possibile_outcomes = 
+            for p in combinations(collect(R),quantity)
+                new_tuple = (tuple_of_sets...,p)
+                push!(new_possibile_outcomes, new_tuple)
             end
         end
-    end 
-    for comb in possibilities
-        M[row, :] .= 0
-        M[row, comb] .= arr.singularities[row].mult
 
-        if !check_sums(M, arr.max_sum)
-            continue 
-        end 
-
-        recursive_fill(arr, row + 1)
+        possible_outcomes = new_possibile_outcomes
     end
 
+    for tuple_of_sets in possible_outcomes
+        M[row, :] .= 0
+        for i in eachindex(tuple_of_sets)
+            (quantity, multiplicity)  = arr.singularities[row].mult[i]
+            M[row, tuple_of_sets[i]] .= multiplicity 
+        end
+        recursive_fill(arr, row + 1)
+    end
+    
     M[row, :] .= 0
 end
 
@@ -118,21 +119,25 @@ end
 =#
 function check_existance(arr::Arrangement)
     recursive_fill(arr, 1)
-    println("miau: ", length(arr.solutions))
+    println("test: ", length(arr.solutions))
 
     for sol in arr.solutions
         draw_solution(arr, sol) 
         println()
     end 
-end
+end 
+curves = [Conic("Q₁"), Conic("Q₂"), Conic("Q₃"),Conic("Q₄")] 
 
-curves = [Conic("Q₁"), Conic("Q₂"), Conic("Q₃"),Conic("Q₄")]    
+singularities = [D(6)]
 singularities = [A(3), A(3), A(3), A(3), D(4), D(4), A(5), A(5), A(7)]
 
 arr = Arrangement(curves, singularities)
 check_existance(arr)
 
+s = arr.cols_permutations
+arr.rows_permutations
 println(arr.solutions)
-println("test!")
 
+curves = [Line("L₁"), Line("L₂"), Line("L₃"), Conic("Q₁"), Conic("Q₂")]
+singularities = [A(1), A(3), D(4), D(6), D(6), D(8)]
 

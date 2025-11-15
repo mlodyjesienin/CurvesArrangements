@@ -7,9 +7,9 @@ function get_cols_permutations(curves::Vector{<:Curve})
 
     end
     for permutable_idxs in values(groups)
-        if length(permutable_idxs) < 2 
-            continue 
-        end 
+        # if length(permutable_idxs) < 2 
+        #     continue 
+        # end 
         cols = [
             (idxs = collect(1:n); idxs[permutable_idxs] .= perm; idxs)
             for perm in permutations(permutable_idxs)
@@ -26,12 +26,11 @@ function get_rows_permutations(singularities::Vector{<:Singularity})
     groups = Dict{String, Vector{Int}}()
     for (i, s) in enumerate(singularities)
         push!(get!(groups, s.name, Int[]), i)
-
     end
     for permutable_idxs in values(groups)
-        if length(permutable_idxs) < 2 
-            continue 
-        end 
+        # if length(permutable_idxs) < 2 
+        #     continue 
+        # end 
         rows = [
             (idxs = collect(1:n); idxs[permutable_idxs] .= perm; idxs)
             for perm in permutations(permutable_idxs)
