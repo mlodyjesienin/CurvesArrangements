@@ -31,7 +31,7 @@ struct D <: Singularity
     function D(k::Int)
         n_c = 3
         name =  "D" * string(k) 
-        if(k==2)
+        if(k==4)
             mult = [Pair(3,2)]
         else 
             mult = [Pair(1,2), Pair(2, k ÷ 2)]
