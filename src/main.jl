@@ -40,12 +40,16 @@ end
 #=
     Function for checking whether there already exist solution that is the same as found one.
 =#
-function repetition(arr::Arrangement)
-    M = copy(arr.M) 
+flag = false 
+function repetition(solutions::Vector{Matrix{Int}}, M::Matrix{Int})
+    global flag
+    rows = size(M)[1]
     for cols_perm in arr.cols_permutations 
         for rows_perm in arr.rows_permutations
-            if(M[rows_perm,cols_perm] in arr.solutions)
-                return true 
+            if(is_valid_permutation(rows_perm, rows))
+                if(M[rows_perm[1:rows],cols_perm] in solutions)
+                    return true 
+                end 
             end 
         end 
     end 
@@ -55,19 +59,19 @@ end
 #=
     The main recursive function for filling the arrangament matrix row by row. 
 =#
+counter = 0
+counter2 = 0
 function recursive_fill(arr::Arrangement, row::Int)
+    global  counter 
+    global counter2
     if row > length(arr.singularities)
-        #if !repetition(arr)
-        push!(arr.solutions, copy(arr.M))
-        #end
         return 
     end 
+    println("counter : ", counter)
 
-    M = arr.M
     num_curves = arr.singularities[row].n_c 
     all_curves = length(arr.curves)
     possible_outcomes = [()]
-    possibilities = collect(combinations(1:all_curves, num_curves))
     for (quantity, multiplicity) in arr.singularities[row].mult
         new_possibile_outcomes = []
         for tuple_of_sets in possible_outcomes
@@ -88,16 +92,27 @@ function recursive_fill(arr::Arrangement, row::Int)
         possible_outcomes = new_possibile_outcomes
     end
 
-    for tuple_of_sets in possible_outcomes
-        M[row, :] .= 0
-        for i in eachindex(tuple_of_sets)
-            (quantity, multiplicity)  = arr.singularities[row].mult[i]
-            M[row, tuple_of_sets[i]] .= multiplicity 
+    new_solutions = Matrix{Int}[]
+    for M in arr.solutions
+        for tuple_of_sets in possible_outcomes
+            M2 = vcat(copy(M), zeros(Int, 1, all_curves))
+            for i in eachindex(tuple_of_sets)
+                (quantity, multiplicity)  = arr.singularities[row].mult[i]
+                M2[row, tuple_of_sets[i]] .= multiplicity 
+            end
+            if(!repetition(new_solutions, M2))
+                push!(new_solutions, M2)
+                counter+=1
+                println("new:  $counter, row: $row")
+            else 
+                counter2+=1
+                println("not new: $counter2, row: $row")
+            end 
         end
-        recursive_fill(arr, row + 1)
-    end
-    
-    M[row, :] .= 0
+    end 
+    arr.solutions = new_solutions 
+    println("arr solutions length: $(length(arr.solutions))")
+    recursive_fill(arr, row + 1)
 end
 
 #=
@@ -130,19 +145,57 @@ function check_existance(arr::Arrangement)
         println()
     end 
 end 
-curves = [Conic("Q₁"), Conic("Q₂"), Conic("Q₃"),Conic("Q₄")] 
+curves = [Conic("Q₁"), Conic("Q₂"), Conic("Q₃"), Conic("Q₄")] 
 
 singularities = [D(6)]
 singularities = [A(1), A(3), A(5), D(4), D(6)]
-singularities = [A(3), A(3), A(3), A(3), D(4), D(4), A(5), A(5), A(7)]
+singularities = [A(3), A(3), A(3), A(3), D(4), D(4), A(5),A(5), A(7)]
 
 arr = Arrangement(curves, singularities)
 check_existance(arr)
+
+flag 
 
 s = arr.cols_permutations
 arr.rows_permutations
 println(arr.solutions)
 
 curves = [Line("L₁"), Line("L₂"), Line("L₃"), Conic("Q₁"), Conic("Q₂")]
-singularities = [A(1), A(3), D(4), D(6), D(6), D(8)]
+singularities = [A(1), A(3), D(4), D(6), D(6)]
+singularities = [A(1), A(3), D(4)]
 
+
+counter = 0
+counter 
+
+
+arr.curves
+arr.rows_permutations
+arr.singularities
+arr.cols_permutations
+
+
+
+M = [1 2 3 ; 3 4 5;]
+
+
+size(M)[1]
+
+
+sol = arr.solutions
+
+counter = 0
+for (i,M) in enumerate(sol)
+    sol2 = copy(sol)
+    deleteat!(sol2,i)
+    t = repetition(sol2,M)
+    if(t)
+        counter+=1
+        println(M)
+    end 
+end
+counter = 2 
+counter +1 
+
+
+arr.solutions[1]

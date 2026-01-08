@@ -40,26 +40,25 @@ struct D <: Singularity
     end
 end
 
-struct Arrangement{T<:Curve, S<:Singularity}
+mutable struct Arrangement{T<:Curve, S<:Singularity}
     curves::Vector{T}
     singularities::Vector{S}
-    M::Matrix{Int}
     solutions::Vector{Matrix{Int}}
     max_sum::Vector{Int}
     rows_permutations::Vector{Vector{Int}}
     cols_permutations::Vector{Vector{Int}}
 
     function Arrangement(curves::Vector{T}, singularities::Vector{S}) where {T<:Curve, S<:Singularity}
-        n_sing = length(singularities)
+        n_sing = length(singularities)  
         n_curv = length(curves)
-        M = zeros(Int, n_sing, n_curv)
+        M = zeros(Int, 0, n_curv)
         solutions = Matrix{Int}[]
+        push!(solutions, M)
         max_sum = max_sum_for_arr(curves)
         rows_permutations = get_rows_permutations(singularities)
         cols_permutations = get_cols_permutations(curves)
         return new{T,S}(curves, 
                         singularities, 
-                        M, 
                         solutions, 
                         max_sum, 
                         rows_permutations, 
