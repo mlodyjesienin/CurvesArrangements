@@ -1,0 +1,9 @@
+name = "CurvesArrangements"
+uuid = "09d6ede8-81e6-475e-bbb6-f153e00c36f6"
+authors = ["Filip Zielinski <filipzielinski377@gmail.com>"]
+
+[deps]
+Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
+
+[compat]
+Combinatorics = "1.1.0"
