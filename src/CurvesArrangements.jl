@@ -11,23 +11,27 @@ function draw_solution(arr::Arrangement, sol::Matrix{Int})
     col_headers = [c.name for c in arr.curves]
     row_headers = [s.name for s in arr.singularities]
 
-    col_widths = [maximum(length.(col_headers)); fill(6, length(col_headers))...]
+    row_width = maximum(length.(row_headers))
+    col_widths = fill(maximum(length.(col_headers)), length(col_headers))
 
+    print(rpad("", row_width))
     for (j, col) in enumerate(col_headers)
-        print(" ", rpad(col, col_widths[j+1]))
+        print(" ", rpad(col, col_widths[j]))
     end
     println()
-    total_width = sum(col_widths) + length(col_headers)
+
+    total_width = row_width + sum(col_widths) + length(col_headers)
     println("-"^total_width)
 
     for (i, rowname) in enumerate(row_headers)
-        print(rpad(rowname, col_widths[1]))
-        for j in 1:length(col_headers)
-            print(" ", lpad(sol[i, j], col_widths[j+1]))
+        print(rpad(rowname, row_width))
+        for j in eachindex(col_headers)
+            print(" ", lpad(sol[i, j], col_widths[j]))
         end
         println()
     end
 end
+
 
 #=
     Checks if every column of arrangament-matrix has sum
@@ -72,7 +76,7 @@ function possible_row_fills(arr::Arrangement, row::Int)::Vector{Tuple{Vector{Int
                 R = setdiff(R, Σ)
             end
             if length(R) < quantity
-                println("error size of a set is not enough")
+                @error "Number of curves is too low."
                 return 0 
             end 
             for p in combinations(collect(R),quantity)
@@ -94,6 +98,8 @@ function recursive_fill(arr::Arrangement, row::Int)
         return 
     end 
     
+    @info "Processing row $row of $(length(arr.singularities)). 
+            Considered possibilities: $(length(arr.solutions))"
     possibilities = possible_row_fills(arr, row)
     
     new_solutions = Matrix{Int}[]
@@ -171,7 +177,11 @@ end
     incidency conditions.
 =#
 function check_existance(arr::Arrangement)
+    @info "Checking existance of incidency matrices of $arr..."
     recursive_fill(arr, 1)
+    @info "Found $(length(arr.solutions)) different incidency matrices up to permutations.\n 
+    Printing solutions..."
+    @info ""
     for sol in arr.solutions
         draw_solution(arr, sol) 
         println()

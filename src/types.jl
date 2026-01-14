@@ -18,6 +18,11 @@ struct ZeroCurve <: Curve
     d::Int
 end 
 ZeroCurve() = ZeroCurve("", 0) 
+
+function Base.show(io::IO, c::Curve)
+    print(io, string(typeof(c)) *" " *c.name)
+end
+
 struct A <: Singularity
     k::Int
     mult::Vector{Pair{Int}}
@@ -41,6 +46,10 @@ struct D <: Singularity
         return new(k,mult,3,name)
     end
 end
+
+function Base.show(io::IO, d::Singularity)
+    print(io, d.name)
+end 
 
 function recursive_permutation(permutation::Vector{Int}, permutable::Vector{Vector{Int}}, result::Vector{Vector{Int}}, idx::Int)
     if(idx > length(permutable))
@@ -114,3 +123,16 @@ mutable struct Arrangement{T<:Curve, S<:Singularity}
                         cols_permutations)
     end
 end
+
+function Base.show(io::IO, arr::Arrangement)
+    println(io, "Arrangement of ")
+    for curve in arr.curves 
+        print(io,curve,", ")
+    end 
+    print(io, "\n")
+    println(io, "with singularities")
+    for singularity in arr.singularities[begin:end-1]
+        print(io,singularity,", ")
+    end 
+    print(io, arr.singularities[end],".")
+end 
