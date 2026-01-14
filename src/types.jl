@@ -14,7 +14,13 @@ struct Line <: Curve
     name::String 
     d::Int 
 end 
-Line(name::String) =Line(name, 1)
+Line(name::String) = Line(name, 1)
+
+struct ZeroCurve <: Curve 
+    name::String 
+    d::Int
+end 
+ZeroCurve() = ZeroCurve("", 0) 
 struct A <: Singularity
     k::Int
     n_c::Int

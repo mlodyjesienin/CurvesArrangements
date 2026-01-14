@@ -33,7 +33,7 @@ end
     less or equal then specified maximal values. 
 =#
 function check_sums(M::Matrix{Int}, max_sum::Vector{Int})
-    col_sums = sum(M, dims=1)             
+    col_sums = vec(sum(M, dims=1))    
     return all(col_sums .<= max_sum )
 end
 
@@ -41,7 +41,9 @@ end
     Function for checking whether there already exist solution that is the same as found one.
 =#
 flag = false 
-function repetition(solutions::Vector{Matrix{Int}}, M::Matrix{Int})
+function repetition(arr::Arrangement,
+                    solutions::Vector{Matrix{Int}}, 
+                    M::Matrix{Int})::Bool 
     global flag
     rows = size(M)[1]
     for cols_perm in arr.cols_permutations 
@@ -56,20 +58,7 @@ function repetition(solutions::Vector{Matrix{Int}}, M::Matrix{Int})
     return false 
 end
 
-#=
-    The main recursive function for filling the arrangament matrix row by row. 
-=#
-counter = 0
-counter2 = 0
-function recursive_fill(arr::Arrangement, row::Int)
-    global  counter 
-    global counter2
-    if row > length(arr.singularities)
-        return 
-    end 
-    println("counter : ", counter)
-
-    num_curves = arr.singularities[row].n_c 
+function possible_row_fills(arr::Arrangement, row::Int)::Vector{Tuple{Vector{Int}}}
     all_curves = length(arr.curves)
     possible_outcomes = [()]
     for (quantity, multiplicity) in arr.singularities[row].mult
@@ -91,16 +80,47 @@ function recursive_fill(arr::Arrangement, row::Int)
 
         possible_outcomes = new_possibile_outcomes
     end
+    return possible_outcomes
+end
 
+#=
+    The main recursive function for filling the arrangament matrix row by row. 
+=#
+counter = 0
+counter2 = 0
+counter3 = 0
+function recursive_fill(arr::Arrangement, row::Int)
+    global  counter 
+    global counter2
+    global counter3
+    if row > length(arr.singularities)
+        return 
+    end 
+    println("counter : ", counter)
+    
+    possibilities = possible_row_fills(arr, row)
+    
     new_solutions = Matrix{Int}[]
     for M in arr.solutions
-        for tuple_of_sets in possible_outcomes
-            M2 = vcat(copy(M), zeros(Int, 1, all_curves))
+        for tuple_of_sets in possibilities
+            M2 = vcat(copy(M), zeros(Int, 1, length(arr.curves)))
             for i in eachindex(tuple_of_sets)
                 (quantity, multiplicity)  = arr.singularities[row].mult[i]
                 M2[row, tuple_of_sets[i]] .= multiplicity 
             end
-            if(!repetition(new_solutions, M2))
+            if(!check_sums(M2, arr.max_sum))
+                counter3+=1
+                continue
+            end 
+            # if(!check_submatrices(M2,arr.curves, arr.singularities))
+            #     counter3+=1
+            #     println("odrzucone przez podmacierze! $counter3")
+            #     for  wiersz in eachrow(M2)
+            #         println(wiersz)
+            #     end
+            #     continue
+            # end 
+            if(!repetition(arr, new_solutions, M2))
                 push!(new_solutions, M2)
                 counter+=1
                 println("new:  $counter, row: $row")
@@ -119,12 +139,67 @@ end
     Not working yet. Placeholder function for checking all proper arrangament-submatrices 
     of considered arrangement matrix.
 =#
-function check_submatrices(cols::Vector{Int},
-                           checked_submatrices::Set{Vector{Int}},
-                           M::Matrix{Int}, 
+
+function print_check_submatrices(M, cols, col,  deleted_curve, max_sum)
+    println("cols: $cols")
+    println("now deleted col: $col")
+    println("deleted curve: $deleted_curve")
+    println("required sums: $max_sum")
+    println("current M:")
+    for row in eachrow(M)
+        println(row)
+    end 
+end
+
+function eliminate_col( M::Matrix{Int},
+                        col::Int,
+                        singularities::Vector{<:Singularity})
+    M2 = copy(M)
+    for (i,row) in enumerate(eachrow(M2))
+        if(row[col] != 0)
+            val = div(sum(row) - 2*row[col], singularities[i].n_c)
+            row[col] = 0
+            row[row.!=0] .= val 
+        end
+    end
+    return M2
+end
+
+check_submatrices(M, curves, singularities) = check_submatrices(M,
+                                                                curves,
+                                                                singularities,
+                                                                fill(true, length(curves)),
+                                                                Set{Vector{Bool}}(),
+                                                                0)
+function check_submatrices(M::Matrix{Int}, 
                            curves::Vector{<:Curve}, 
-                           singularities::Vector{<:Singularity})
-    M = copy(M)    
+                           singularities::Vector{<:Singularity},
+                           cols::Vector{Bool},
+                           checked_submatrices::Set{Vector{Bool}},
+                           depth::Int)::Bool
+    depth >= length(cols) - 2 && return true 
+
+    for i in eachindex(cols)
+        cols[i] || continue
+        cols[i] = false 
+        deleted_curve = curves[i]
+        try 
+            cols in checked_submatrices && begin println("this was already checked: $cols") 
+                                            continue end  
+            push!(checked_submatrices, copy(cols))
+            curves[i] = ZeroCurve() 
+            M2 = eliminate_col(M,i, singularities)
+            print_check_submatrices(M2, cols, i, deleted_curve, max_sum_for_arr(curves))
+
+            check_sums(M2,max_sum_for_arr(curves)) || begin println("SUBMATRIX WRONG")
+                                                            return false end 
+            check_submatrices(M2, curves, singularities,cols, checked_submatrices, depth+1) || return false
+        finally
+            curves[i] = deleted_curve
+            cols[i] = true
+        end 
+    end
+    return true 
 end
 
 #=
@@ -132,20 +207,24 @@ end
     incidency conditions.
 =#
 function check_existance(arr::Arrangement)
+    global counter, counter2, counter3 
+    counter = 0
+    counter2 = 0 
+    counter3 = 0 
     recursive_fill(arr, 1)
     println("test: ", length(arr.solutions))
 
-    count = 0
+    count_loc = 0
     for sol in arr.solutions
-        count += 1
-        if count % 10000 != 0
+        count_loc += 1
+        if count_loc % 10000 != 0
             continue 
         end
         draw_solution(arr, sol) 
         println()
     end 
 end 
-curves = [Conic("Q₁"), Conic("Q₂"), Conic("Q₃"), Conic("Q₄")] 
+curves = Curve[Conic("Q₁"), Conic("Q₂"), Conic("Q₃"), Conic("Q₄")] 
 
 singularities = [D(6)]
 singularities = [A(1), A(3), A(5), D(4), D(6)]
@@ -154,6 +233,7 @@ singularities = [A(3), A(3), A(3), A(3), D(4), D(4), A(5),A(5), A(7)]
 arr = Arrangement(curves, singularities)
 check_existance(arr)
 
+arr.max_sum
 flag 
 
 s = arr.cols_permutations
@@ -164,9 +244,9 @@ curves = [Line("L₁"), Line("L₂"), Line("L₃"), Conic("Q₁"), Conic("Q₂")
 singularities = [A(1), A(3), D(4), D(6), D(6)]
 singularities = [A(1), A(3), D(4)]
 
-
+arr.curves
 counter = 0
-counter 
+counter3
 
 
 arr.curves
@@ -175,27 +255,28 @@ arr.singularities
 arr.cols_permutations
 
 
-
-M = [1 2 3 ; 3 4 5;]
-
-
-size(M)[1]
-
-
 sol = arr.solutions
 
-counter = 0
-for (i,M) in enumerate(sol)
-    sol2 = copy(sol)
-    deleteat!(sol2,i)
-    t = repetition(sol2,M)
-    if(t)
-        counter+=1
-        println(M)
-    end 
-end
-counter = 2 
-counter +1 
+M = arr.solutions[15]
+cols = [true for i=1:4]
+dsa = check_submatrices(M, arr.curves, arr.singularities)
+
+three_conics = Curve[Conic("Q1"), Conic("Q2"), Conic("Q3")]
 
 
-arr.solutions[1]
+four_conics = Curve[Conic("Q1"), Conic("Q2"), Conic("Q3"), Conic("Q4")]
+d4_four = Singularity[D(4) for i=1:3]
+a5_five = Singularity[A(5) for i=1:5]
+
+
+singularities_test = Singularity[d4_four ; a5_five]
+arr_test = Arrangement(four_conics, singularities_test)
+
+
+arr_test.rows_permutations
+check_existance(arr_test)
+xM = []
+
+weird = arr_test.solutions[1]
+
+check_submatrices(weird, arr_test.curves, arr_test.singularities)

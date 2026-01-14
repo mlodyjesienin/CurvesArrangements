@@ -37,8 +37,8 @@ function get_rows_permutations(singularities::Vector{<:Singularity})
     return rows_permutations
 end
 
-function max_sum_for_arr(curves::Vector{<:Curve})
-    max_sum = zeros(length(curves))
+function max_sum_for_arr(curves::Vector{<:Curve}) 
+    max_sum = zeros(Int,length(curves))
         total_deg = sum(curve.d for curve in curves);
         for (idx,curve) in enumerate(curves)
             d = curve.d
