@@ -1,18 +1,15 @@
+using Combinatorics
 abstract type Curve end
 abstract type Singularity end
-
-include("utils.jl")
-
 struct Conic <: Curve
     name::String
     d::Int
-
 end
 Conic(name::String) = Conic(name, 2)
 
 struct Line <: Curve 
     name::String 
-    d::Int 
+    d::Int
 end 
 Line(name::String) = Line(name, 1)
 
@@ -23,27 +20,74 @@ end
 ZeroCurve() = ZeroCurve("", 0) 
 struct A <: Singularity
     k::Int
-    n_c::Int
     mult::Vector{Pair{Int}}
+    n_c::Int 
     name::String 
 end
-A(k::Int) = A(k, 2, [Pair(2,(k + 1) ÷ 2)], "A" * string(k))
+A(k::Int) = A(k,[Pair(2,(k + 1) ÷ 2)], 2, "A" * string(k))
 
 struct D <: Singularity
     k::Int
-    n_c::Int
     mult::Vector{Pair{Int}}
+    n_c::Int
     name::String
     function D(k::Int)
-        n_c = 3
         name =  "D" * string(k) 
         if(k==4)
             mult = [Pair(3,2)]
         else 
             mult = [Pair(1,2), Pair(2, k ÷ 2)]
         end 
-        return new(k,n_c,mult, name)
+        return new(k,mult,3,name)
     end
+end
+
+function recursive_permutation(permutation::Vector{Int}, permutable::Vector{Vector{Int}}, result::Vector{Vector{Int}}, idx::Int)
+    if(idx > length(permutable))
+        push!(result, permutation)
+        return 
+    end 
+
+    for p in permutations(permutable[idx])
+        p_new = copy(permutation)
+        p_new[permutable[idx]] .= p  
+        recursive_permutation(p_new, permutable, result, idx+1)
+    end 
+end
+
+function get_cols_permutations(curves::Vector{<:Curve})
+    n = length(curves)
+    cols_permutations = Vector{Int}[]
+    groups = Dict{Int, Vector{Int}}()
+    for (i, c) in enumerate(curves)
+        push!(get!(groups, c.d, Int[]), i)
+
+    end
+    recursive_permutation(collect(1:n), collect(values(groups)), cols_permutations, 1)              
+   
+    return cols_permutations
+end
+
+function get_rows_permutations(singularities::Vector{<:Singularity})
+    n = length(singularities)
+    rows_permutations = Vector{Int}[]
+    groups = Dict{String, Vector{Int}}()
+    for (i, s) in enumerate(singularities)
+        push!(get!(groups, s.name, Int[]), i)
+    end
+    println("groups: $(groups)")
+    recursive_permutation(collect(1:n), collect(values(groups)), rows_permutations, 1)              
+    return rows_permutations
+end
+
+function max_sum_for_arr(curves::Vector{<:Curve}) 
+    max_sum = zeros(Int,length(curves))
+        total_deg = sum(curve.d for curve in curves);
+        for (idx,curve) in enumerate(curves)
+            d = curve.d
+            max_sum[idx] += d*(total_deg - d)            
+        end
+    return max_sum 
 end
 
 mutable struct Arrangement{T<:Curve, S<:Singularity}
@@ -55,7 +99,6 @@ mutable struct Arrangement{T<:Curve, S<:Singularity}
     cols_permutations::Vector{Vector{Int}}
 
     function Arrangement(curves::Vector{T}, singularities::Vector{S}) where {T<:Curve, S<:Singularity}
-        n_sing = length(singularities)  
         n_curv = length(curves)
         M = zeros(Int, 0, n_curv)
         solutions = Matrix{Int}[]
