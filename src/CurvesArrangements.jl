@@ -2,7 +2,8 @@ module CurvesArrangements
 
 include("types.jl")
 
-export Curve, ZeroCurve, Line, Conic, Singularity, Arrangement,A, D, check_existance
+export Curve, ZeroCurve, Line, Conic, Singularity, Arrangement,A, D, check_existance, 
+    show_solutions
 
 #=
     Function for drawing the found solution matrix. 
@@ -71,7 +72,7 @@ function repetition(arr::Arrangement,
     return false 
 end
 
-function possible_row_fills(arr::Arrangement, row::Int)::Vector{Tuple{Vector{Int}}}
+function possible_row_fills(arr::Arrangement, row::Int) #::Vector{Tuple{Vector{Int}}}
     all_curves = length(arr.curves)
     possible_outcomes = [()]
     for (quantity, multiplicity) in arr.singularities[row].mult
@@ -90,7 +91,6 @@ function possible_row_fills(arr::Arrangement, row::Int)::Vector{Tuple{Vector{Int
                 push!(new_possibile_outcomes, new_tuple)
             end
         end
-
         possible_outcomes = new_possibile_outcomes
     end
     return possible_outcomes
@@ -184,13 +184,14 @@ end
 
 function naive_combinatorics(arr::Arrangement)::Bool
     lhs = sum(s -> combinatorics_coeff(s), arr.singularities)
-    rhs = sum(m -> m[1].d*m[2].d, combinations(c,2))
+    rhs = sum(m -> m[1].d*m[2].d, combinations(arr.curves,2))
     if(rhs != lhs)
         @error "Naive combinatorics does not hold. 
         The sum of intersection numbers is $lhs, 
         expected sum from Bezout's theorem is $rhs"
         return false
     end 
+    @info "Naive combinatorics for arrangament holds."
     return true 
 end
 #=

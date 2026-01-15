@@ -84,7 +84,6 @@ function get_rows_permutations(singularities::Vector{<:Singularity})
     for (i, s) in enumerate(singularities)
         push!(get!(groups, s.name, Int[]), i)
     end
-    println("groups: $(groups)")
     recursive_permutation(collect(1:n), collect(values(groups)), rows_permutations, 1)              
     return rows_permutations
 end
