@@ -99,15 +99,16 @@ function max_sum_for_arr(curves::Vector{<:Curve})
     return max_sum 
 end
 
-mutable struct Arrangement{T<:Curve, S<:Singularity}
-    curves::Vector{T}
-    singularities::Vector{S}
+mutable struct Arrangement
+    curves::Vector{Curve}
+    singularities::Vector{Singularity}
     solutions::Vector{Matrix{Int}}
     max_sum::Vector{Int}
     rows_permutations::Vector{Vector{Int}}
     cols_permutations::Vector{Vector{Int}}
 
-    function Arrangement(curves::Vector{T}, singularities::Vector{S}) where {T<:Curve, S<:Singularity}
+    function Arrangement(curves::AbstractVector{<:Curve}, 
+                         singularities::AbstractVector{<:Singularity})        
         n_curv = length(curves)
         M = zeros(Int, 0, n_curv)
         solutions = Matrix{Int}[]
@@ -115,12 +116,12 @@ mutable struct Arrangement{T<:Curve, S<:Singularity}
         max_sum = max_sum_for_arr(curves)
         rows_permutations = get_rows_permutations(singularities)
         cols_permutations = get_cols_permutations(curves)
-        return new{T,S}(curves, 
-                        singularities, 
-                        solutions, 
-                        max_sum, 
-                        rows_permutations, 
-                        cols_permutations)
+        return new( collect(Curve,curves), 
+                    collect(Singularity,singularities), 
+                    solutions, 
+                    max_sum, 
+                    rows_permutations, 
+                    cols_permutations)
     end
 end
 
