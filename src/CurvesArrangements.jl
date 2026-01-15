@@ -32,6 +32,12 @@ function draw_solution(arr::Arrangement, sol::Matrix{Int})
     end
 end
 
+function show_solutions(arr::Arrangement)
+    for sol in arr.solutions
+        draw_solution(arr, sol)
+        println()
+    end 
+end
 
 #=
     Checks if every column of arrangament-matrix has sum
@@ -172,20 +178,35 @@ function check_submatrices(M::Matrix{Int},
     return true 
 end
 
+function combinatorics_coeff(s::Singularity)::Int 
+    div(sum(p -> p.first * p.second, s.mult),2)
+end
+
+function naive_combinatorics(arr::Arrangement)::Bool
+    lhs = sum(s -> combinatorics_coeff(s), arr.singularities)
+    rhs = sum(m -> m[1].d*m[2].d, combinations(c,2))
+    if(rhs != lhs)
+        @error "Naive combinatorics does not hold. 
+        The sum of intersection numbers is $lhs, 
+        expected sum from Bezout's theorem is $rhs"
+        return false
+    end 
+    return true 
+end
 #=
     Main function finding all arrangement-matrices that satisfy
     incidency conditions.
 =#
-function check_existance(arr::Arrangement)
+function check_existance(arr::Arrangement)::Bool
     @info "Checking existance of incidency matrices of $arr..."
+    naive_combinatorics(arr) || return false 
     recursive_fill(arr, 1)
-    @info "Found $(length(arr.solutions)) different incidency matrices up to permutations.\n 
-    Printing solutions..."
-    @info ""
-    for sol in arr.solutions
-        draw_solution(arr, sol) 
-        println()
-    end 
-end 
+    @info """
+    Found $(length(arr.solutions)) different incidence matrices up to permutations.
 
+    To print solutions, run:
+    show_solutions(arr)
+    """
+    return length(arr.solutions) > 0
+end 
 end #CurvesArrangements
