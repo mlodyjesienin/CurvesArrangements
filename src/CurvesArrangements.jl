@@ -3,7 +3,7 @@ module CurvesArrangements
 include("types.jl")
 
 export Curve, ZeroCurve, Line, Conic, Singularity, Arrangement,A, D, check_existance, 
-    show_solutions
+    show_solutions, check_submatrices
 
 #=
     Function for drawing the found solution matrix. 
@@ -137,13 +137,23 @@ function eliminate_col( M::Matrix{Int},
     M2 = copy(M)
     for (i,row) in enumerate(eachrow(M2))
         if(row[col] != 0)
-            val = div(sum(row) - 2*row[col], singularities[i].n_c)
+            val = div(sum(row) - 2*row[col], 2)
             row[col] = 0
             row[row.!=0] .= val 
         end
     end
     return M2
 end
+
+function print_subm(M, cols, curves)
+    println("currently processed cols: $cols")
+    for row in eachrow(M)
+        println(row)
+    end 
+    sums = max_sum_for_arr(curves)
+    a = check_sums(M, sums)
+    println("sums: $(sums), check: $a")
+end 
 
 check_submatrices(M, curves, singularities) = check_submatrices(M,
                                                                 curves,
