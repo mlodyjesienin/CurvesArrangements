@@ -83,8 +83,7 @@ function possible_row_fills(arr::Arrangement, row::Int) #::Vector{Tuple{Vector{I
                 R = setdiff(R, Σ)
             end
             if length(R) < quantity
-                @error "Number of curves is too low."
-                return 0 
+                throw(ArgumentError("Number of curves is too low.")) 
             end 
             for p in combinations(collect(R),quantity)
                 new_tuple = (tuple_of_sets...,p)

@@ -25,7 +25,7 @@ end
 
 struct A <: Singularity
     k::Int
-    mult::Vector{Pair{Int}}
+    mult::Vector{Pair{Int, Int}}
     n_c::Int 
     name::String 
 end
@@ -33,7 +33,7 @@ A(k::Int) = A(k,[Pair(2,(k + 1) ÷ 2)], 2, "A" * string(k))
 
 struct D <: Singularity
     k::Int
-    mult::Vector{Pair{Int}}
+    mult::Vector{Pair{Int, Int}}
     n_c::Int
     name::String
     function D(k::Int)
