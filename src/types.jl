@@ -29,6 +29,12 @@ Base.show(io::IO, c::Curve) =
 Base.show(io::IO, c::ArbitraryCurve) =
     print(io, "$(typeof(c)) of degree $(c.d)")
 
+struct ArbitrarySingularity <: Singularity 
+    mult::Vector{Pair{Int}}
+    n_c::Int 
+    name::String 
+end
+
 struct A <: Singularity
     k::Int
     mult::Vector{Pair{Int}}
