@@ -2,7 +2,7 @@ module CurvesArrangements
 
 include("types.jl")
 
-export Curve, ZeroCurve, Line, Conic, Singularity, Arrangement,A, D, check_existance, 
+export Curve, ArbitraryCurve, ZeroCurve, Line, Conic, Singularity, Arrangement,A, D, check_existance, 
     show_solutions, check_submatrices
 
 #=

@@ -7,6 +7,10 @@ struct Conic <: Curve
 end
 Conic(name::String) = Conic(name, 2)
 
+struct ArbitraryCurve <: Curve 
+    name::String 
+    d:: Int 
+end 
 struct Line <: Curve 
     name::String 
     d::Int
@@ -19,9 +23,11 @@ struct ZeroCurve <: Curve
 end 
 ZeroCurve() = ZeroCurve("", 0) 
 
-function Base.show(io::IO, c::Curve)
-    print(io, string(typeof(c)) *" " *c.name)
-end
+Base.show(io::IO, c::Curve) =
+    print(io, "$(typeof(c)) $(c.name)")
+
+Base.show(io::IO, c::ArbitraryCurve) =
+    print(io, "$(typeof(c)) of degree $(c.d)")
 
 struct A <: Singularity
     k::Int
